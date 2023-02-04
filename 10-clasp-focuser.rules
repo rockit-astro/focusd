@@ -1,1 +1,1 @@
-SUBSYSTEM=="tty", ATTRS{idVendor}=="0403", ATTRS{idProduct}=="6001", ATTRS{serial}=="OP21GA0U", SYMLINK="focuser", MODE="0666"
+SUBSYSTEM=="tty", ATTRS{idVendor}=="03eb", ATTRS{idProduct}=="204b", ATTRS{serial}=="95035323636351D050C1", SYMLINK="focuser", MODE="0666"

@@ -1,5 +1,5 @@
 Name:      clasp-multifocus-data
-Version:   20221016
+Version:   20230204
 Release:   0
 Url:       https://github.com/warwick-one-metre/multifocusd
 Summary:   Focuser configuration files.
