@@ -4,17 +4,25 @@ RPMBUILD = rpmbuild --define "_topdir %(pwd)/build" \
         --define "_srcrpmdir %{_topdir}" \
         --define "_sourcedir %(pwd)"
 
-GIT_VERSION = $(shell git name-rev --name-only --tags --no-undefined HEAD 2>/dev/null || echo git-`git rev-parse --short HEAD`)
-SERVER_VERSION=$(shell awk '/Version:/ { print $$2; }' observatory-multifocus-server.spec)
-
 all:
 	mkdir -p build
-	cp focusd focusd.bak
-	awk '{sub("SOFTWARE_VERSION = .*$$","SOFTWARE_VERSION = \"$(SERVER_VERSION) ($(GIT_VERSION))\""); print $0}' focusd.bak > focusd
-	${RPMBUILD} -ba observatory-multifocus-server.spec
-	${RPMBUILD} -ba observatory-multifocus-client.spec
-	${RPMBUILD} -ba python3-warwick-observatory-multifocus.spec
-	${RPMBUILD} -ba clasp-multifocus-data.spec
+	date --utc +%Y%m%d%H%M%S > VERSION
+	${RPMBUILD} --define "_version %(cat VERSION)" -ba rockit-focuser.spec
+	${RPMBUILD} --define "_version %(cat VERSION)" -ba python3-rockit-focuser.spec
+
 	mv build/noarch/*.rpm .
-	rm -rf build
-	mv focusd.bak focusd
+	rm -rf build VERSION
+
+install:
+	@date --utc +%Y%m%d%H%M%S > VERSION
+	@python3 -m build --outdir .
+	@sudo pip3 install rockit.focuser-$$(cat VERSION)-py3-none-any.whl
+	@rm VERSION
+	@cp focusd focus /bin/
+	@cp focusd@.service /usr/lib/systemd/system/
+	@cp completion/focus /etc/bash_completion.d/
+	@install -d /etc/focusd
+	@echo ""
+	@echo "Installed server, client, and service files."
+	@echo "Now copy the relevant json config files to /etc/focusd/"
+	@echo "and udev rules to /usr/lib/udev/rules.d/"

@@ -1,10 +1,8 @@
 ## Multi-channel focuser daemon
 
-`focusd` interfaces with and wraps a [Multi-channel Focus Controller](https://github.com/warwick-one-metre/multifocus-controller) and exposes it via Pyro.
+`focusd` interfaces with and wraps a [Multi-channel Focus Controller](https://github.com/rockit-astro/focus-controller) and exposes it via Pyro.
 
 `focus` is a commandline utility for controlling the focusers.
-
-See [Software Infrastructure](https://github.com/warwick-one-metre/docs/wiki/Software-Infrastructure) for an overview of the software architecture and instructions for developing and deploying the code.
 
 ### Configuration
 
@@ -14,9 +12,9 @@ A configuration file is specified when launching the server, and the `focus` fro
 The configuration options are:
 ```python
 {
-  "daemon": "localhost_test", # Run the server as this daemon. Daemon types are registered in `warwick.observatory.common.daemons`.
+  "daemon": "localhost_test", # Run the server as this daemon. Daemon types are registered in `rockit.common.daemons`.
   "log_name": "focusd@test", # The name to use when writing messages to the observatory log.
-  "control_machines": ["LocalHost"], # Machine names that are allowed to control (rather than just query) state. Machine names are registered in `warwick.observatory.common.IP`.
+  "control_machines": ["LocalHost"], # Machine names that are allowed to control (rather than just query) state. Machine names are registered in `rockit.common.IP`.
   "serial_port": "/dev/focuser", # Serial FIFO for communicating with the focuser
   "serial_baud": 9600, # Serial baud rate (always 9600)
   "serial_timeout": 5, # Serial comms timeout
@@ -27,26 +25,22 @@ The configuration options are:
 }
 
 ```
-
 ## Initial Installation
 
 
 The automated packaging scripts will push 4 RPM packages to the observatory package repository:
 
-| Package                               | Description |
-|---------------------------------------| ------ |
-| observatory-multifocus-server         | Contains the `focusd` server and systemd service file. |
-| observatory-multifocus-client          | Contains the `focus` commandline utility for controlling the focuser server. |
-| python3-warwick-observatory-multifocus | Contains the python module with shared code. |
-| clasp-multifocus-data                  | Contains the json configuration for the CLASP telescope. |
-
-`obsevatory-multifocus-server`, `observatory-multifocus-client` and `clasp-multifocus-data` should be installed on the `clasp-tcs` machine.
+| Package                | Description                                                                  |
+|------------------------|------------------------------------------------------------------------------|
+| rockit-focuser-server  | Contains the `focusd` server and systemd service file.                       |
+| rockit-focuser-client  | Contains the `focus` commandline utility for controlling the focuser server. |
+| python3-rockit-focuser | Contains the python module with shared code.                                 |
+| clasp-focuser-data     | Contains the json configuration for the CLASP telescope.                     |
 
 After installing packages, the systemd service should be enabled:
 
 ```
-sudo systemctl enable focusd@<config>
-sudo systemctl start focusd@<config>
+sudo systemctl enable --now focusd@<config>
 ```
 
 where `config` is the name of the json file for the appropriate telescope.
@@ -56,7 +50,7 @@ Now open a port in the firewall:
 sudo firewall-cmd --zone=public --add-port=<port>/tcp --permanent
 sudo firewall-cmd --reload
 ```
-where `port` is the port defined in `warwick.observatory.common.daemons` for the daemon specified in the config.
+where `port` is the port defined in `rockit.common.daemons` for the daemon specified in the config.
 
 ### Upgrading Installation
 
@@ -69,8 +63,7 @@ sudo yum update
 
 The daemon should then be restarted to use the newly installed code:
 ```
-sudo systemctl stop focusd@<config>
-sudo systemctl start focusd@<config>
+sudo systemctl restart focusd@<config>
 ```
 
 ### Testing Locally
