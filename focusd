@@ -33,21 +33,21 @@ from warwick.observatory.multifocus import CommandStatus, Config, FocuserStatus
 # Set automatically when generating RPM package
 SOFTWARE_VERSION = "UNKNOWN"
 
-CHANNELS = [1, 2]
-STATUS_REGEX = r'T1=(?P<T1>[+-]\d{6}),C1=(?P<C1>[+-]\d{6}),T2=(?P<T2>[+-]\d{6}),C2=(?P<C2>[+-]\d{6})'
-
 
 class MultifocusDaemon:
     """Daemon interface for multi-channel focuser"""
     def __init__(self, config):
         self.wait_condition = threading.Condition()
         self._config = config
-        self._regex = re.compile(STATUS_REGEX)
+
+        channels = range(1, config.channels + 1)
+        regex = ','.join([rf'T{c}=(?P<T{c}>[+-]\d{{6}}),C{c}=(?P<C{c}>[+-]\d{{6}})' for c in channels])
+        self._regex = re.compile(regex)
 
         self._state_lock = threading.Lock()
         self._state_date = datetime.datetime.min
-        self._current_steps = [0 for _ in CHANNELS]
-        self._target_steps = [0 for _ in CHANNELS]
+        self._current_steps = [0 for _ in channels]
+        self._target_steps = [0 for _ in channels]
 
         self._comm_lock = threading.Lock()
         self._command_queue = queue.Queue()
@@ -124,9 +124,9 @@ class MultifocusDaemon:
 
         with self._state_lock:
             self._state_date = datetime.datetime.utcnow()
-            for i, c in enumerate(CHANNELS):
-                self._current_steps[i] = int(match.group(f'C{c}'))
-                self._target_steps[i] = int(match.group(f'T{c}'))
+            for i in range(self._config.channels):
+                self._current_steps[i] = int(match.group(f'C{i + 1}'))
+                self._target_steps[i] = int(match.group(f'T{i + 1}'))
 
     def process_request(self, request, data):
         """
@@ -138,7 +138,7 @@ class MultifocusDaemon:
 
         # Only stop is valid when moving
         if request != 'stop':
-            i = CHANNELS.index(data[0])
+            i = data[0] - 1
             if self._current_steps[i] != self._target_steps[i]:
                 return CommandStatus.Blocked
 
@@ -149,8 +149,7 @@ class MultifocusDaemon:
         elif request == 'set':
             command = f'{data[0]}{data[1]:+07d}\n'
         elif request == 'offset':
-            i = CHANNELS.index(data[0])
-            command = f'{data[0]}{self._target_steps[i] + data[1]:+07d}\n'
+            command = f'{data[0]}{self._target_steps[data[0] - 1] + data[1]:+07d}\n'
         else:
             print(f'Unknown request `{request}`')
             return CommandStatus.Failed
@@ -225,16 +224,17 @@ class MultifocusDaemon:
             }
 
             if self._port is not None:
-                for i, c in enumerate(CHANNELS):
+                for i in range(self._config.channels):
                     moving = self._target_steps[i] != self._current_steps[i]
+                    c = i + 1
                     data.update({
                         f'status_{c}': FocuserStatus.Moving if moving else FocuserStatus.Idle,
                         f'target_steps_{c}': self._target_steps[i],
                         f'current_steps_{c}': self._current_steps[i]
                     })
             else:
-                for c in CHANNELS:
-                    data[f'status_{c}'] = FocuserStatus.Disabled
+                for i in range(self._config.channels):
+                    data[f'status_{i + 1}'] = FocuserStatus.Disabled
 
             return data
 
@@ -244,7 +244,7 @@ class MultifocusDaemon:
         if not pyro_client_matches(self._config.control_ips):
             return CommandStatus.InvalidControlIP
 
-        if channel not in CHANNELS:
+        if channel < 1 or channel > self._config.channels:
             return CommandStatus.InvalidChannel
 
         with self._comm_lock:
@@ -255,7 +255,7 @@ class MultifocusDaemon:
             return result
 
         start = datetime.datetime.utcnow()
-        i = CHANNELS.index(channel)
+        i = channel - 1
 
         while True:
             with self._move_complete_condition:
@@ -278,7 +278,7 @@ class MultifocusDaemon:
         if not pyro_client_matches(self._config.control_ips):
             return CommandStatus.InvalidControlIP
 
-        if channel not in CHANNELS:
+        if channel < 1 or channel > self._config.channels:
             return CommandStatus.InvalidChannel
 
         with self._comm_lock:
@@ -291,7 +291,7 @@ class MultifocusDaemon:
         if not pyro_client_matches(self._config.control_ips):
             return CommandStatus.InvalidControlIP
 
-        if channel not in CHANNELS:
+        if channel < 1 or channel > self._config.channels:
             return CommandStatus.InvalidChannel
 
         with self._comm_lock:

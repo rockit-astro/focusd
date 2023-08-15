@@ -20,6 +20,7 @@ The configuration options are:
   "serial_port": "/dev/focuser", # Serial FIFO for communicating with the focuser
   "serial_baud": 9600, # Serial baud rate (always 9600)
   "serial_timeout": 5, # Serial comms timeout
+  "channels": 2, # Number of controllable focusers
   "idle_loop_delay": 5, # Delay in seconds between focuser status polls when idle
   "moving_loop_delay": 0.5, # Delay in seconds between focuser status polls when moving
   "move_timeout": 180 # Maximum time expected for a focus movement

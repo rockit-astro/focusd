@@ -9,7 +9,7 @@ _focus()
 
     case "${prev}" in
         set|offset|stop|zero)
-            opts="1 2"
+            opts=$(focus list-channels)
             ;;
         *)
             ;;
