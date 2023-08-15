@@ -23,7 +23,7 @@ CONFIG_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
     'required': ['daemon', 'log_name', 'control_machines', 'serial_port', 'serial_baud', 'serial_timeout',
-                 'idle_loop_delay', 'moving_loop_delay', 'move_timeout'],
+                 'channels', 'idle_loop_delay', 'moving_loop_delay', 'move_timeout'],
     'properties': {
         'daemon': {
             'type': 'string',
@@ -50,6 +50,10 @@ CONFIG_SCHEMA = {
         'serial_timeout': {
             'type': 'number',
             'min': 0
+        },
+        'channels': {
+            'type': 'number',
+            'min': 1
         },
         'idle_loop_delay': {
             'type': 'number',
@@ -87,6 +91,7 @@ class Config:
         self.serial_baud = int(config_json['serial_baud'])
         self.serial_timeout = int(config_json['serial_timeout'])
 
+        self.channels = config_json['channels']
         self.idle_loop_delay = int(config_json['idle_loop_delay'])
         self.moving_loop_delay = int(config_json['moving_loop_delay'])
         self.move_timeout = int(config_json['move_timeout'])

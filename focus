@@ -30,9 +30,6 @@ from warwick.observatory.multifocus import Config, CommandStatus, FocuserStatus
 SCRIPT_NAME = os.path.basename(sys.argv[0])
 sys.excepthook = Pyro4.util.excepthook
 
-CHANNELS = [1, 2]
-CHANNELS_ARG_STRING = '1|2'
-
 
 def run_command(command, args):
     """Runs a daemon command, handling error messages"""
@@ -50,7 +47,7 @@ def run_command(command, args):
         config = Config(files[0])
 
     try:
-        ret = command(config, args)
+        ret = command(config, range(1, config.channels + 1), args)
     except Pyro4.errors.CommunicationError:
         ret = -101
 
@@ -60,7 +57,7 @@ def run_command(command, args):
     sys.exit(ret)
 
 
-def print_status(config, _):
+def print_status(config, channels, _):
     """Prints a human-readable summary of the focuser status"""
     with config.daemon.connect() as focusd:
         data = focusd.report_status()
@@ -68,15 +65,15 @@ def print_status(config, _):
     if data is not None:
         date = datetime.datetime.strptime(data['date'], '%Y-%m-%dT%H:%M:%SZ')
         print('Data received ' + TFmt.Bold + str(date) + TFmt.Clear + ':')
-        for i in CHANNELS:
-            label = 'Channel {}: '.format(i)
-            channel_status = data['status_' + str(i)]
+        for c in channels:
+            label = f'Channel {c}: '
+            channel_status = data[f'status_{c}']
             if channel_status < FocuserStatus.Idle:
                 print(label + FocuserStatus.label(channel_status, True))
                 continue
 
-            channel_steps = data['current_steps_' + str(i)]
-            channel_target = data['target_steps_' + str(i)]
+            channel_steps = data[f'current_steps_{c}']
+            channel_target = data[f'target_steps_{c}']
             label += TFmt.Bold + (TFmt.Yellow if channel_status == FocuserStatus.Moving else '')
             label += f'{channel_steps:+07d}{TFmt.Clear} steps'
             if channel_status == FocuserStatus.Moving:
@@ -86,7 +83,7 @@ def print_status(config, _):
     return 0
 
 
-def print_json(config, _):
+def print_json(config, *_):
     """Prints a machine-readable summary of the focuser status"""
     with config.daemon.connect() as focusd:
         print(json.dumps(focusd.report_status() or {}))
@@ -94,10 +91,10 @@ def print_json(config, _):
     return 0
 
 
-def set_position(config, args):
+def set_position(config, channels, args):
     """Request a focuser channel to move a specific step position"""
     try:
-        if len(args) == 2 and int(args[0]) in CHANNELS:
+        if len(args) == 2 and int(args[0]) in channels:
             channel = int(args[0])
             position = int(args[1])
 
@@ -110,14 +107,14 @@ def set_position(config, args):
                     return focusd.stop_channel(channel)
     except ValueError:
         pass
-    print(f'usage: {SCRIPT_NAME} set ({CHANNELS_ARG_STRING}) <step position>')
+    print(f'usage: {SCRIPT_NAME} set ({"|".join([str(c) for c in channels])}) <step position>')
     return -1
 
 
-def offset_position(config, args):
+def offset_position(config, channels, args):
     """Request a focuser channel to move by a specific step delta"""
     try:
-        if len(args) == 2 and int(args[0]) in CHANNELS:
+        if len(args) == 2 and int(args[0]) in channels:
             channel = int(args[0])
             delta = int(args[1])
 
@@ -130,43 +127,48 @@ def offset_position(config, args):
                     return focusd.stop_channel(channel)
     except ValueError:
         pass
-    print(f'usage: {SCRIPT_NAME} offset ({CHANNELS_ARG_STRING}) <step delta>')
+    print(f'usage: {SCRIPT_NAME} offset ({"|".join([str(c) for c in channels])}) <step delta>')
     return -1
 
 
-def stop(config, args):
+def stop(config, channels, args):
     """Stop a focuser channel"""
     try:
-        if len(args) == 1 and int(args[0]) in CHANNELS:
+        if len(args) == 1 and int(args[0]) in channels:
             with config.daemon.connect() as focusd:
                 return focusd.stop_channel(int(args[0]))
     except ValueError:
         pass
 
-    print(f'usage: {SCRIPT_NAME} stop ({CHANNELS_ARG_STRING})')
+    print(f'usage: {SCRIPT_NAME} stop ({"|".join([str(c) for c in channels])})')
     return -1
 
 
-def set_home_position(config, args):
+def set_home_position(config, channels, args):
     """Sets the current focuser position to the home position"""
     try:
-        if len(args) == 1 and int(args[0]) in CHANNELS:
+        if len(args) == 1 and int(args[0]) in channels:
             with config.daemon.connect() as focusd:
                 return focusd.reset_home_position(int(args[0]))
     except ValueError:
         pass
 
-    print(f'usage: {SCRIPT_NAME} zero ({CHANNELS_ARG_STRING})')
+    print(f'usage: {SCRIPT_NAME} zero ({"|".join([str(c) for c in channels])})')
     return -1
 
 
-def initialize(config, _):
+def list_focuser_channels(config, channels, _):
+    print(" ".join([str(c) for c in channels]))
+    return 0
+
+
+def initialize(config, *_):
     """Connect to the focuser"""
     with config.daemon.connect() as focusd:
         return focusd.initialize()
 
 
-def shutdown(config, _):
+def shutdown(config, *_):
     """Disconnect from the focuser"""
     with config.daemon.connect() as focusd:
         return focusd.shutdown()
@@ -199,6 +201,7 @@ if __name__ == '__main__':
         'status': print_status,
         'json': print_json,
         'zero': set_home_position,
+        'list-channels': list_focuser_channels,
         'init': initialize,
         'kill': shutdown
     }
