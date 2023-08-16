@@ -8,5 +8,15 @@
   "channels": 2,
   "idle_loop_delay": 5,
   "moving_loop_delay": 0.5,
-  "move_timeout": 180
+  "move_timeout": 180,
+  "temperature_probes": {
+    "rasa1": {
+      "label": "RASA1",
+      "address": "2834A2540A000023"
+    },
+    "rasa2": {
+      "label": "RASA2",
+      "address": "28AE071E0B0000EC"
+    }
+  }
 }
