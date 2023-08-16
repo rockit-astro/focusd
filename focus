@@ -75,6 +75,8 @@ def print_status(config, channels, _):
                 label += f' (moving to {TFmt.Bold}{channel_target:+07d}{TFmt.Clear} steps)'
 
             print(label)
+        print(f' OTA Fans: {TFmt.Bold}{"ENABLED" if data["fans_enabled"] else "DISABLED"}{TFmt.Clear}')
+
     return 0
 
 
@@ -157,6 +159,16 @@ def list_focuser_channels(config, channels, _):
     return 0
 
 
+def enable_fans(config, channels, args):
+    """Enable or disable OTA fans"""
+    if len(args) == 1 and args[0] in ['enable', 'disable']:
+        with config.daemon.connect() as focusd:
+            return focusd.enable_fans(args[0] == 'enable')
+
+    print(f'usage: {SCRIPT_NAME} fans <enable|disable>')
+    return -1
+
+
 def initialize(config, *_):
     """Connect to the focuser"""
     with config.daemon.connect() as focusd:
@@ -179,6 +191,7 @@ def print_usage():
     print('   stop         request the focuser to stop moving')
     print('   status       print a human-readable summary of the focuser status')
     print('   json         print a machine-readable summary of the focuser status')
+    print('   fans         enable or disable the OTA fans')
     print('engineering commands:')
     print('   zero         sets the current focuser position to the home position')
     print('   init         connect to the focuser')
@@ -196,6 +209,7 @@ if __name__ == '__main__':
         'status': print_status,
         'json': print_json,
         'zero': set_home_position,
+        'fans': enable_fans,
         'list-channels': list_focuser_channels,
         'init': initialize,
         'kill': shutdown

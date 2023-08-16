@@ -46,6 +46,7 @@ class FocuserDaemon:
         self._current_steps = [0 for _ in channels]
         self._target_steps = [0 for _ in channels]
 
+        self._fans_enabled = False
         self._comm_lock = threading.Lock()
         self._command_queue = queue.Queue()
         self._result_queue = queue.Queue()
@@ -112,7 +113,7 @@ class FocuserDaemon:
             return
 
         if self._port.write('?\n'.encode('ascii')) != 2:
-            raise serial.SerialException('Failed to send query command')
+            raise serial.SerialException('Failed to send stepper query command')
 
         response = self._port.readline().decode('ascii').strip()
         match = self._regex.match(response)
@@ -125,6 +126,12 @@ class FocuserDaemon:
                 self._current_steps[i] = int(match.group(f'C{i + 1}'))
                 self._target_steps[i] = int(match.group(f'T{i + 1}'))
 
+        if self._port.write('#\n'.encode('ascii')) != 2:
+            raise serial.SerialException('Failed to send fan query command')
+
+        response = self._port.readline().decode('ascii').strip()
+        self._fans_enabled = response == '1'
+
     def process_request(self, request, data):
         """
         Process a command sent by the user
@@ -133,23 +140,26 @@ class FocuserDaemon:
         if self._port is None:
             return CommandStatus.NotConnected
 
-        # Only stop is valid when moving
-        if request != 'stop':
-            i = data[0] - 1
-            if self._current_steps[i] != self._target_steps[i]:
-                return CommandStatus.Blocked
-
-        if request == 'stop':
-            command = f'{data[0]}S\n'
-        elif request == 'zero':
-            command = f'{data[0]}Z\n'
-        elif request == 'set':
-            command = f'{data[0]}{data[1]:+07d}\n'
-        elif request == 'offset':
-            command = f'{data[0]}{self._target_steps[data[0] - 1] + data[1]:+07d}\n'
+        if request == 'fans':
+            command = f'#{1 * data}\n'
         else:
-            print(f'Unknown request `{request}`')
-            return CommandStatus.Failed
+            # Only stop is valid when moving
+            if request != 'stop':
+                i = data[0] - 1
+                if self._current_steps[i] != self._target_steps[i]:
+                    return CommandStatus.Blocked
+
+            if request == 'stop':
+                command = f'{data[0]}S\n'
+            elif request == 'zero':
+                command = f'{data[0]}Z\n'
+            elif request == 'set':
+                command = f'{data[0]}{data[1]:+07d}\n'
+            elif request == 'offset':
+                command = f'{data[0]}{self._target_steps[data[0] - 1] + data[1]:+07d}\n'
+            else:
+                print(f'Unknown request `{request}`')
+                return CommandStatus.Failed
 
         if self._port.write(command.encode('ascii')) != len(command):
             print('Failed to send command')
@@ -221,6 +231,8 @@ class FocuserDaemon:
             }
 
             if self._port is not None:
+                data['fans_enabled'] = self._fans_enabled
+
                 for i in range(self._config.channels):
                     c = i + 1
                     data.update({
@@ -276,6 +288,16 @@ class FocuserDaemon:
 
         with self._comm_lock:
             self._command_queue.put(('zero', (channel, None)))
+            return self._result_queue.get()
+
+    @Pyro4.expose
+    def enable_fans(self, enabled):
+        """Turn OTA fans on or off"""
+        if not pyro_client_matches(self._config.control_ips):
+            return CommandStatus.InvalidControlIP
+
+        with self._comm_lock:
+            self._command_queue.put(('fans', enabled))
             return self._result_queue.get()
 
     @Pyro4.expose
