@@ -61,6 +61,7 @@ def print_status(config, channels, _):
     """Prints a human-readable summary of the focuser status"""
     with config.daemon.connect() as focusd:
         data = focusd.report_status()
+        temperature_labels = focusd.temperature_labels()
 
     print(f'Focuser is {FocuserStatus.label(data[f"status"], True)}')
     if data['status'] == FocuserStatus.Active:
@@ -76,6 +77,16 @@ def print_status(config, channels, _):
 
             print(label)
         print(f' OTA Fans: {TFmt.Bold}{"ENABLED" if data["fans_enabled"] else "DISABLED"}{TFmt.Clear}')
+        if temperature_labels:
+            print('Temperature Probes:')
+            max_label_length = max([len(label) for label in temperature_labels.values()])
+            for key, label in temperature_labels.items():
+                padding = ''.join([' '] * (max_label_length + 3 - len(label)))
+                value = data['temperature'][key]
+                if value is not None:
+                    print(padding + f'{label}: {TFmt.Bold}{round(value, 1)}{TFmt.Clear} \u00B0C')
+                else:
+                    print(padding + f'{label}: {TFmt.Bold}UNKNOWN{TFmt.Clear}')
 
     return 0
 

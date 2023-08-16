@@ -23,7 +23,7 @@ CONFIG_SCHEMA = {
     'type': 'object',
     'additionalProperties': False,
     'required': ['daemon', 'log_name', 'control_machines', 'serial_port', 'serial_baud', 'serial_timeout',
-                 'channels', 'idle_loop_delay', 'moving_loop_delay', 'move_timeout'],
+                 'channels', 'idle_loop_delay', 'moving_loop_delay', 'move_timeout'], # temperature_probes is optional
     'properties': {
         'daemon': {
             'type': 'string',
@@ -66,6 +66,24 @@ CONFIG_SCHEMA = {
         'move_timeout': {
             'type': 'number',
             'min': 0
+        },
+        'temperature_probes': {
+            'type': 'object',
+            'additionalProperties': {
+                'type': 'object',
+                'additionalProperties': False,
+                'required': ['label', 'address'],
+                'properties': {
+                    'label': {
+                        'type': 'string'
+                    },
+                    'address': {
+                        'type': 'string',
+                        'minLength': 16,
+                        'maxLength': 16
+                    }
+                }
+            }
         }
     }
 }
@@ -95,3 +113,4 @@ class Config:
         self.idle_loop_delay = int(config_json['idle_loop_delay'])
         self.moving_loop_delay = int(config_json['moving_loop_delay'])
         self.move_timeout = int(config_json['move_timeout'])
+        self.temperature_probes = config_json.get('temperature_probes', {})

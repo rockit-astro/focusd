@@ -8,5 +8,15 @@
   "channels": 1,
   "idle_loop_delay": 5,
   "moving_loop_delay": 0.5,
-  "move_timeout": 180
+  "move_timeout": 180,
+  "temperature_probes": {
+    "primary_mirror": {
+      "label": "Primary Mirror",
+      "address": "28EFE61E0B0000B9"
+    },
+    "secondary_mirrro": {
+      "label": "Secondary Mirror",
+      "address": "28FBE91E0B000051"
+    }
+  }
 }

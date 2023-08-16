@@ -47,6 +47,9 @@ class FocuserDaemon:
         self._target_steps = [0 for _ in channels]
 
         self._fans_enabled = False
+        self._temperature = {key: None for key in config.temperature_probes}
+        self._temperature_index = 0
+
         self._comm_lock = threading.Lock()
         self._command_queue = queue.Queue()
         self._result_queue = queue.Queue()
@@ -106,6 +109,24 @@ class FocuserDaemon:
                 print(f'Failed to close serial port ({exception})')
                 self._port = None
                 return CommandStatus.Failed
+
+    def _update_temperatures(self):
+        """Poll the temperature of one-wire probes"""
+        # Measurements take ~1 second per probe, so we round-robin polling the probes
+        if self._port is None:
+            return
+
+        probe_name = list(self._config.temperature_probes.keys())[self._temperature_index]
+        address = self._config.temperature_probes[probe_name]['address']
+
+        if self._port.write(f'@{address}\n'.encode('ascii')) != 18:
+            raise serial.SerialException('Failed to send temperature query command')
+
+        response = self._port.readline().decode('ascii').strip()
+        if response != '?':
+            self._temperature[probe_name] = float(response)
+
+        self._temperature_index = (self._temperature_index + 1) % len(self._config.temperature_probes)
 
     def _update_state(self):
         """Request and parse the status of the focus controller"""
@@ -193,6 +214,8 @@ class FocuserDaemon:
             try:
                 # Refresh the state to ensure a valid view of the controller state before returning
                 self._update_state()
+                self._update_temperatures()
+
                 is_moving = self._port is not None and \
                     any(self._current_steps[i] != t for i, t in enumerate(self._target_steps))
 
@@ -231,7 +254,10 @@ class FocuserDaemon:
             }
 
             if self._port is not None:
-                data['fans_enabled'] = self._fans_enabled
+                data.update({
+                    'fans_enabled': self._fans_enabled,
+                    'temperature': self._temperature
+                })
 
                 for i in range(self._config.channels):
                     c = i + 1
@@ -242,6 +268,11 @@ class FocuserDaemon:
                     })
 
             return data
+
+    @Pyro4.expose
+    def temperature_labels(self):
+        """Query the labels associated with the temperature probes"""
+        return {k: v['label'] for k, v in self._config.temperature_probes.items()}
 
     @Pyro4.expose
     def set_focus(self, channel, steps, offset=False):
