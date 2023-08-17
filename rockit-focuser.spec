@@ -23,6 +23,8 @@ mkdir -p %{buildroot}%{_udevrulesdir}
 
 %{__install} %{_sourcedir}/clasp.json %{buildroot}%{_sysconfdir}/focusd/
 %{__install} %{_sourcedir}/10-clasp-focuser.rules %{buildroot}%{_udevrulesdir}
+%{__install} %{_sourcedir}/halfmetre.json %{buildroot}%{_sysconfdir}/focusd/
+%{__install} %{_sourcedir}/10-halfmetre-focuser.rules %{buildroot}%{_udevrulesdir}
 
 %package server
 Summary:  Focuser control server.
@@ -36,6 +38,16 @@ Group:    Unspecified
 Requires: python3-rockit-focuser
 %description client
 
+%package data-clasp
+Summary: Focuser data for CLASP telescope
+Group:   Unspecified
+%description data-clasp
+
+%package data-halfmetre
+Summary: Focuser data for the half metre telescope
+Group:   Unspecified
+%description data-halfmetre
+
 %files server
 %defattr(0755,root,root,-)
 %{_bindir}/focusd
@@ -47,14 +59,14 @@ Requires: python3-rockit-focuser
 %{_bindir}/focus
 /etc/bash_completion.d/focus
 
-%package data-lapalma
-Summary: Focuser station data for CLASP telescope
-Group:   Unspecified
-%description data-lapalma
-
-%files data-lapalma
+%files data-clasp
 %defattr(0644,root,root,-)
 %{_udevrulesdir}/10-clasp-focuser.rules
 %{_sysconfdir}/focusd/clasp.json
+
+%files data-halfmetre
+%defattr(0644,root,root,-)
+%{_udevrulesdir}/10-halfmetre-focuser.rules
+%{_sysconfdir}/focusd/halfmetre.json
 
 %changelog
