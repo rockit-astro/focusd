@@ -216,21 +216,18 @@ class FocuserDaemon:
         """Returns a dictionary containing the current focuser state"""
         with self._state_lock:
             data = {
-                'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ')
+                'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'status': FocuserStatus.Disabled if self._port is None else FocuserStatus.Active
             }
 
             if self._port is not None:
                 for i in range(self._config.channels):
-                    moving = self._target_steps[i] != self._current_steps[i]
                     c = i + 1
                     data.update({
-                        f'status_{c}': FocuserStatus.Moving if moving else FocuserStatus.Idle,
                         f'target_steps_{c}': self._target_steps[i],
-                        f'current_steps_{c}': self._current_steps[i]
+                        f'current_steps_{c}': self._current_steps[i],
+                        f'moving_{c}': self._target_steps[i] != self._current_steps[i]
                     })
-            else:
-                for i in range(self._config.channels):
-                    data[f'status_{i + 1}'] = FocuserStatus.Disabled
 
             return data
 
