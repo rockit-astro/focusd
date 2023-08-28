@@ -27,15 +27,15 @@ The configuration options are:
 ```
 ## Initial Installation
 
+The automated packaging scripts will push 5 RPM packages to the observatory package repository:
 
-The automated packaging scripts will push 4 RPM packages to the observatory package repository:
-
-| Package                | Description                                                                  |
-|------------------------|------------------------------------------------------------------------------|
-| rockit-focuser-server  | Contains the `focusd` server and systemd service file.                       |
-| rockit-focuser-client  | Contains the `focus` commandline utility for controlling the focuser server. |
-| python3-rockit-focuser | Contains the python module with shared code.                                 |
-| clasp-focuser-data     | Contains the json configuration for the CLASP telescope.                     |
+| Package                       | Description                                                                  |
+|-------------------------------|------------------------------------------------------------------------------|
+| rockit-focuser-server         | Contains the `focusd` server and systemd service file.                       |
+| rockit-focuser-client         | Contains the `focus` commandline utility for controlling the focuser server. |
+| rockit-focuser-data-clasp     | Contains the json configuration for the CLASP telescope.                     |
+| rockit-focuser-data-halfmetre | Contains the json configuration for the half metre telescope.                |
+| python3-rockit-focuser        | Contains the python module with shared code.                                 |
 
 After installing packages, the systemd service should be enabled:
 
