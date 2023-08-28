@@ -17,7 +17,7 @@
 """Helper function to validate and parse the json config file"""
 
 import json
-from warwick.observatory.common import daemons, IP, validation
+from rockit.common import daemons, IP, validation
 
 CONFIG_SCHEMA = {
     'type': 'object',
