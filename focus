@@ -63,20 +63,32 @@ def print_status(config, channels, _):
         data = focusd.report_status()
         temperature_labels = focusd.temperature_labels()
 
-    print(f'Focuser is {FocuserStatus.label(data[f"status"], True)}')
-    if data['status'] == FocuserStatus.Active:
-        for c in channels:
-            label = f'Channel {c}: '
-            channel_steps = data[f'current_steps_{c}']
-            channel_target = data[f'target_steps_{c}']
-            channel_moving = data[f'moving_{c}']
-            label += TFmt.Bold + (TFmt.Yellow if channel_moving else '')
-            label += f'{channel_steps:+07d}{TFmt.Clear} steps'
-            if channel_moving:
-                label += f' (moving to {TFmt.Bold}{channel_target:+07d}{TFmt.Clear} steps)'
+    label = f'Focuser is {FocuserStatus.label(data[f"status"], True)}'
+    if len(channels) == 1:
+        if data['status'] == FocuserStatus.Active:
+            if data[f'moving_1']:
+                label = f'Focuser is {TFmt.Bold}{TFmt.Yellow}MOVING{TFmt.Clear}'
+                label += f' ({TFmt.Bold}{data["current_steps_1"]:06d}{TFmt.Clear} / '
+                label += f'{TFmt.Bold}{data["target_steps_1"]:06d}{TFmt.Clear} steps)'
+            else:
+                label = f'Focuser is {TFmt.Bold}IDLE{TFmt.Clear}'
+                label += f' ({TFmt.Bold}{data["current_steps_1"]:06d}{TFmt.Clear} steps)'
 
-            print(label)
-        print(f' OTA Fans: {TFmt.Bold}{"ENABLED" if data["fans_enabled"] else "DISABLED"}{TFmt.Clear}')
+    print(label)
+    if data['status'] == FocuserStatus.Active:
+        if len(channels) != 1:
+            for c in channels:
+                label = f'Channel {c}: '
+                channel_steps = data[f'current_steps_{c}']
+                channel_target = data[f'target_steps_{c}']
+                channel_moving = data[f'moving_{c}']
+                label += TFmt.Bold + (TFmt.Yellow if channel_moving else '')
+                label += f'{channel_steps:+07d}{TFmt.Clear} steps'
+                if channel_moving:
+                    label += f' (moving to {TFmt.Bold}{channel_target:+07d}{TFmt.Clear} steps)'
+
+                print(label)
+        print(f'OTA Fans: {TFmt.Bold}{"ENABLED" if data["fans_enabled"] else "DISABLED"}{TFmt.Clear}')
         if temperature_labels:
             print('Temperature Probes:')
             max_label_length = max([len(label) for label in temperature_labels.values()])
@@ -101,67 +113,103 @@ def print_json(config, *_):
 
 def set_position(config, channels, args):
     """Request a focuser channel to move a specific step position"""
+    channel = -1
+    position = 0
     try:
-        if len(args) == 2 and int(args[0]) in channels:
+        if len(channels) == 1:
+            channel = 1
+            position = int(args[0])
+        elif len(args) == 2 and int(args[0]) in channels:
             channel = int(args[0])
             position = int(args[1])
-
-            try:
-                with config.daemon.connect(timeout=0) as focusd:
-                    return focusd.set_focus(channel, position)
-            except KeyboardInterrupt:
-                # ctrl-c terminates the running command
-                with config.daemon.connect() as focusd:
-                    return focusd.stop_channel(channel)
     except ValueError:
         pass
-    print(f'usage: {SCRIPT_NAME} set ({"|".join([str(c) for c in channels])}) <step position>')
+
+    if channel != -1:
+        try:
+            with config.daemon.connect(timeout=0) as focusd:
+                return focusd.set_focus(channel, position)
+        except KeyboardInterrupt:
+            # ctrl-c terminates the running command
+            with config.daemon.connect() as focusd:
+                return focusd.stop_channel(channel)
+    elif len(channels) == 1:
+        print(f'usage: {SCRIPT_NAME} set <step position>')
+    else:
+        print(f'usage: {SCRIPT_NAME} set ({"|".join([str(c) for c in channels])}) <step position>')
     return -1
 
 
 def offset_position(config, channels, args):
     """Request a focuser channel to move by a specific step delta"""
+    channel = -1
+    delta = 0
     try:
-        if len(args) == 2 and int(args[0]) in channels:
+        if len(channels) == 1 and len(args) == 1:
+            channel = 1
+            delta = int(args[0])
+        elif len(args) == 2 and int(args[0]) in channels:
             channel = int(args[0])
             delta = int(args[1])
-
-            try:
-                with config.daemon.connect(timeout=0) as focusd:
-                    return focusd.set_focus(channel, delta, offset=True)
-            except KeyboardInterrupt:
-                # ctrl-c terminates the running command
-                with config.daemon.connect() as focusd:
-                    return focusd.stop_channel(channel)
     except ValueError:
         pass
-    print(f'usage: {SCRIPT_NAME} offset ({"|".join([str(c) for c in channels])}) <step delta>')
+
+    if channel != -1:
+        try:
+            with config.daemon.connect(timeout=0) as focusd:
+                return focusd.set_focus(channel, delta, offset=True)
+        except KeyboardInterrupt:
+            # ctrl-c terminates the running command
+            with config.daemon.connect() as focusd:
+                return focusd.stop_channel(channel)
+    elif len(channels) == 1:
+        print(f'usage: {SCRIPT_NAME} offset <step delta>')
+    else:
+        print(f'usage: {SCRIPT_NAME} offset ({"|".join([str(c) for c in channels])}) <step delta>')
     return -1
 
 
 def stop(config, channels, args):
     """Stop a focuser channel"""
+    channel = -1
     try:
-        if len(args) == 1 and int(args[0]) in channels:
-            with config.daemon.connect() as focusd:
-                return focusd.stop_channel(int(args[0]))
+        if len(channels) == 1 and len(args) == 0:
+            channel = 1
+        elif len(args) == 1 and int(args[0]) in channels:
+            channel = int(args[0])
     except ValueError:
         pass
 
-    print(f'usage: {SCRIPT_NAME} stop ({"|".join([str(c) for c in channels])})')
+    if channel != -1:
+        with config.daemon.connect() as focusd:
+            return focusd.stop_channel(channel)
+
+    elif len(channels) == 1:
+        print(f'usage: {SCRIPT_NAME} stop')
+    else:
+        print(f'usage: {SCRIPT_NAME} stop ({"|".join([str(c) for c in channels])})')
     return -1
 
 
 def set_home_position(config, channels, args):
     """Sets the current focuser position to the home position"""
+    channel = -1
     try:
-        if len(args) == 1 and int(args[0]) in channels:
-            with config.daemon.connect() as focusd:
-                return focusd.reset_home_position(int(args[0]))
+        if len(channels) == 1 and len(args) == 0:
+            channel = 1
+        elif len(args) == 1 and int(args[0]) in channels:
+            channel = int(args[0])
     except ValueError:
         pass
 
-    print(f'usage: {SCRIPT_NAME} zero ({"|".join([str(c) for c in channels])})')
+    if channel != -1:
+        with config.daemon.connect() as focusd:
+            return focusd.reset_home_position(channel)
+
+    elif len(channels) == 1:
+        print(f'usage: {SCRIPT_NAME} zero')
+    else:
+        print(f'usage: {SCRIPT_NAME} zero ({"|".join([str(c) for c in channels])})')
     return -1
 
 
