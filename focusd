@@ -175,9 +175,11 @@ class FocuserDaemon:
             elif request == 'zero':
                 command = f'{data[0]}Z\n'
             elif request == 'set':
+                self._target_steps[data[0] - 1] = data[1]
                 command = f'{data[0]}{data[1]:+07d}\n'
             elif request == 'offset':
-                command = f'{data[0]}{self._target_steps[data[0] - 1] + data[1]:+07d}\n'
+                self._target_steps[data[0] - 1] += data[1]
+                command = f'{data[0]}{self._target_steps[data[0] - 1]:+07d}\n'
             else:
                 print(f'Unknown request `{request}`')
                 return CommandStatus.Failed
