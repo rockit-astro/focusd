@@ -123,7 +123,7 @@ class FocuserDaemon:
             raise serial.SerialException('Failed to send temperature query command')
 
         response = self._port.readline().decode('ascii').strip()
-        if response != '?':
+        if response != '?' and response != 'FAILED':
             self._temperature[probe_name] = float(response)
 
         self._temperature_index = (self._temperature_index + 1) % len(self._config.temperature_probes)
