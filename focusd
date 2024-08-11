@@ -113,7 +113,7 @@ class FocuserDaemon:
     def _update_temperatures(self):
         """Poll the temperature of one-wire probes"""
         # Measurements take ~1 second per probe, so we round-robin polling the probes
-        if self._port is None:
+        if self._port is None or not self._config.temperature_probes:
             return
 
         probe_name = list(self._config.temperature_probes.keys())[self._temperature_index]
