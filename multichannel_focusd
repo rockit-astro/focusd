@@ -142,7 +142,7 @@ class FocuserDaemon:
             raise serial.SerialException(f'Failed to parse status result: `{response}`')
 
         with self._state_lock:
-            self._state_date = datetime.datetime.utcnow()
+            self._state_date = datetime.datetime.now(datetime.timezone.utc)
             for i in range(self._config.channels):
                 self._current_steps[i] = int(match.group(f'C{i + 1}'))
                 self._target_steps[i] = int(match.group(f'T{i + 1}'))
@@ -251,7 +251,7 @@ class FocuserDaemon:
         """Returns a dictionary containing the current focuser state"""
         with self._state_lock:
             data = {
-                'date': datetime.datetime.utcnow().strftime('%Y-%m-%dT%H:%M:%SZ'),
+                'date': datetime.datetime.now(datetime.timezone.utc).strftime('%Y-%m-%dT%H:%M:%SZ'),
                 'status': FocuserStatus.Disabled if self._port is None else FocuserStatus.Active
             }
 
@@ -292,7 +292,7 @@ class FocuserDaemon:
         if result != CommandStatus.Succeeded:
             return result
 
-        start = datetime.datetime.utcnow()
+        start = datetime.datetime.now(datetime.timezone.utc)
         i = channel - 1
 
         while True:
@@ -305,7 +305,7 @@ class FocuserDaemon:
             if self._port is None:
                 return CommandStatus.Failed
 
-            if (datetime.datetime.utcnow() - start).total_seconds() > self._config.move_timeout:
+            if (datetime.datetime.now(datetime.timezone.utc) - start).total_seconds() > self._config.move_timeout:
                 return CommandStatus.Failed
 
         return CommandStatus.Succeeded
