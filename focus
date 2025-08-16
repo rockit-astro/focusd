@@ -22,7 +22,7 @@ import json
 import os
 import sys
 import Pyro4
-from rockit.common import TFmt
+from rockit.common import print
 from rockit.focuser.multichannel import Config, CommandStatus, FocuserStatus
 
 
@@ -66,12 +66,12 @@ def print_status(config, channels, _):
     if len(channels) == 1:
         if data['status'] == FocuserStatus.Active:
             if data[f'moving_1']:
-                label = f'Focuser is {TFmt.Bold}{TFmt.Yellow}MOVING{TFmt.Clear}'
-                label += f' ({TFmt.Bold}{data["current_steps_1"]:06d}{TFmt.Clear} / '
-                label += f'{TFmt.Bold}{data["target_steps_1"]:06d}{TFmt.Clear} steps)'
+                label = f'Focuser is [b][yellow]MOVING[/yellow][/b]'
+                label += f' ([b]{data["current_steps_1"]:06d}[/b] / '
+                label += f'[b]{data["target_steps_1"]:06d}[/b] steps)'
             else:
-                label = f'Focuser is {TFmt.Bold}IDLE{TFmt.Clear}'
-                label += f' ({TFmt.Bold}{data["current_steps_1"]:06d}{TFmt.Clear} steps)'
+                label = f'Focuser is [b]IDLE[/b]'
+                label += f' ([b]{data["current_steps_1"]:06d}[/b] steps)'
 
     print(label)
     if data['status'] == FocuserStatus.Active:
@@ -80,14 +80,14 @@ def print_status(config, channels, _):
                 label = f'Channel {c}: '
                 channel_steps = data[f'current_steps_{c}']
                 channel_target = data[f'target_steps_{c}']
-                channel_moving = data[f'moving_{c}']
-                label += TFmt.Bold + (TFmt.Yellow if channel_moving else '')
-                label += f'{channel_steps:+07d}{TFmt.Clear} steps'
-                if channel_moving:
-                    label += f' (moving to {TFmt.Bold}{channel_target:+07d}{TFmt.Clear} steps)'
-
+                if data[f'moving_{c}']:
+                    label += f'[b][yellow]{channel_steps:+07d}[/yellow][/b] steps'
+                    label += f' (moving to [b]{channel_target:+07d}[/b] steps)'
+                else:
+                    label += f'[b]{channel_steps:+07d}[/b] steps'
                 print(label)
-        print(f'OTA Fans: {TFmt.Bold}{"ENABLED" if data["fans_enabled"] else "DISABLED"}{TFmt.Clear}')
+
+        print(f'OTA Fans: [b]{"ENABLED" if data["fans_enabled"] else "DISABLED"}[/b]')
         if temperature_labels:
             print('Temperature Probes:')
             max_label_length = max([len(label) for label in temperature_labels.values()])
@@ -95,9 +95,9 @@ def print_status(config, channels, _):
                 padding = ''.join([' '] * (max_label_length + 3 - len(label)))
                 value = data['temperature'][key]
                 if value is not None:
-                    print(padding + f'{label}: {TFmt.Bold}{round(value, 1)}{TFmt.Clear} \u00B0C')
+                    print(padding + f'{label}: [b]{round(value, 1)}[/b] \u00B0C')
                 else:
-                    print(padding + f'{label}: {TFmt.Bold}UNKNOWN{TFmt.Clear}')
+                    print(padding + f'{label}: [b]UNKNOWN[/b]')
 
     return 0
 
