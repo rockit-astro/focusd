@@ -1,6 +1,6 @@
 Name:      rockit-focuser-multichannel
 Version:   %{_version}
-Release:   1
+Release:   1%{dist}
 Summary:   Focuser.
 Url:       https://github.com/rockit-astro/focusd-multichannel
 License:   GPL-3.0
