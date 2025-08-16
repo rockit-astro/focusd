@@ -23,8 +23,6 @@ mkdir -p %{buildroot}%{_udevrulesdir}
 
 %{__install} %{_sourcedir}/clasp.json %{buildroot}%{_sysconfdir}/focusd/
 %{__install} %{_sourcedir}/10-clasp-focuser.rules %{buildroot}%{_udevrulesdir}
-%{__install} %{_sourcedir}/halfmetre.json %{buildroot}%{_sysconfdir}/focusd/
-%{__install} %{_sourcedir}/10-halfmetre-focuser.rules %{buildroot}%{_udevrulesdir}
 %{__install} %{_sourcedir}/portable.json %{buildroot}%{_sysconfdir}/focusd/
 %{__install} %{_sourcedir}/10-portable-focuser.rules %{buildroot}%{_udevrulesdir}
 
@@ -44,11 +42,6 @@ Requires: python3-rockit-focuser-multichannel
 Summary: Focuser data for CLASP telescope
 Group:   Unspecified
 %description data-clasp
-
-%package data-halfmetre
-Summary: Focuser data for the half metre telescope
-Group:   Unspecified
-%description data-halfmetre
 
 %package data-portable
 Summary: Focuser data for the portable telescope
@@ -70,11 +63,6 @@ Group:   Unspecified
 %defattr(0644,root,root,-)
 %{_udevrulesdir}/10-clasp-focuser.rules
 %{_sysconfdir}/focusd/clasp.json
-
-%files data-halfmetre
-%defattr(0644,root,root,-)
-%{_udevrulesdir}/10-halfmetre-focuser.rules
-%{_sysconfdir}/focusd/halfmetre.json
 
 %files data-portable
 %defattr(0644,root,root,-)

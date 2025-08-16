@@ -29,13 +29,13 @@ The configuration options are:
 
 The automated packaging scripts will push 5 RPM packages to the observatory package repository:
 
-| Package                                    | Description                                                                  |
-|--------------------------------------------|------------------------------------------------------------------------------|
-| rockit-focuser-multichannel-server         | Contains the `multichannel_focusd` server and systemd service file.          |
-| rockit-focuser-multichannel-client         | Contains the `focus` commandline utility for controlling the focuser server. |
-| rockit-focuser-multichannel-data-clasp     | Contains the json configuration for the CLASP telescope.                     |
-| rockit-focuser-multichannel-data-halfmetre | Contains the json configuration for the half metre telescope.                |
-| python3-rockit-focuser-multichannel        | Contains the python module with shared code.                                 |
+| Package                                   | Description                                                                  |
+|-------------------------------------------|------------------------------------------------------------------------------|
+| rockit-focuser-multichannel-server        | Contains the `multichannel_focusd` server and systemd service file.          |
+| rockit-focuser-multichannel-client        | Contains the `focus` commandline utility for controlling the focuser server. |
+| rockit-focuser-multichannel-data-clasp    | Contains the json configuration for the CLASP telescope.                     |
+| rockit-focuser-multichannel-data-portable | Contains the json configuration for the portable telescope.            |
+| python3-rockit-focuser-multichannel       | Contains the python module with shared code.                                 |
 
 After installing packages, the systemd service should be enabled:
 
