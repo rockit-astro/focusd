@@ -28,7 +28,7 @@ import serial
 import Pyro4
 from rockit.common import log
 from rockit.common.helpers import pyro_client_matches
-from rockit.focuser import CommandStatus, Config, FocuserStatus
+from rockit.focuser.multichannel import CommandStatus, Config, FocuserStatus
 
 
 class FocuserDaemon:

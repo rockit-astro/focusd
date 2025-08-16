@@ -29,18 +29,18 @@ The configuration options are:
 
 The automated packaging scripts will push 5 RPM packages to the observatory package repository:
 
-| Package                       | Description                                                                  |
-|-------------------------------|------------------------------------------------------------------------------|
-| rockit-focuser-server         | Contains the `focusd` server and systemd service file.                       |
-| rockit-focuser-client         | Contains the `focus` commandline utility for controlling the focuser server. |
-| rockit-focuser-data-clasp     | Contains the json configuration for the CLASP telescope.                     |
-| rockit-focuser-data-halfmetre | Contains the json configuration for the half metre telescope.                |
-| python3-rockit-focuser        | Contains the python module with shared code.                                 |
+| Package                                    | Description                                                                  |
+|--------------------------------------------|------------------------------------------------------------------------------|
+| rockit-focuser-multichannel-server         | Contains the `multichannel_focusd` server and systemd service file.          |
+| rockit-focuser-multichannel-client         | Contains the `focus` commandline utility for controlling the focuser server. |
+| rockit-focuser-multichannel-data-clasp     | Contains the json configuration for the CLASP telescope.                     |
+| rockit-focuser-multichannel-data-halfmetre | Contains the json configuration for the half metre telescope.                |
+| python3-rockit-focuser-multichannel        | Contains the python module with shared code.                                 |
 
 After installing packages, the systemd service should be enabled:
 
 ```
-sudo systemctl enable --now focusd@<config>
+sudo systemctl enable --now multichannel_focusd@<config>
 ```
 
 where `config` is the name of the json file for the appropriate telescope.
@@ -63,13 +63,13 @@ sudo yum update
 
 The daemon should then be restarted to use the newly installed code:
 ```
-sudo systemctl restart focusd@<config>
+sudo systemctl restart multichannel_focusd@<config>
 ```
 
 ### Testing Locally
 
 The camera server and client can be run directly from a git clone:
 ```
-./focusd test.json
+./multichannel_focusd test.json
 FOCUSD_CONFIG_PATH=./test.json ./focus status
 ```

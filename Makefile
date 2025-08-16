@@ -7,8 +7,8 @@ RPMBUILD = rpmbuild --define "_topdir %(pwd)/build" \
 all:
 	mkdir -p build
 	date --utc +%Y%m%d%H%M%S > VERSION
-	${RPMBUILD} --define "_version %(cat VERSION)" -ba rockit-focuser.spec
-	${RPMBUILD} --define "_version %(cat VERSION)" -ba python3-rockit-focuser.spec
+	${RPMBUILD} --define "_version %(cat VERSION)" -ba rockit-focuser-multichannel.spec
+	${RPMBUILD} --define "_version %(cat VERSION)" -ba python3-rockit-focuser-multichannel.spec
 
 	mv build/noarch/*.rpm .
 	rm -rf build VERSION
@@ -16,10 +16,10 @@ all:
 install:
 	@date --utc +%Y%m%d%H%M%S > VERSION
 	@python3 -m build --outdir .
-	@sudo pip3 install rockit.focuser-$$(cat VERSION)-py3-none-any.whl
+	@sudo pip3 install rockit.focuser.multichannel-$$(cat VERSION)-py3-none-any.whl
 	@rm VERSION
-	@cp focusd focus /bin/
-	@cp focusd@.service /usr/lib/systemd/system/
+	@cp multichannel_focusd focus /bin/
+	@cp multichannel_focusd@.service /usr/lib/systemd/system/
 	@cp completion/focus /etc/bash_completion.d/
 	@install -d /etc/focusd
 	@echo ""

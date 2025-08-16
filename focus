@@ -17,14 +17,13 @@
 
 """Commandline client for controlling a multi-channel focus controller"""
 
-import datetime
 import glob
 import json
 import os
 import sys
 import Pyro4
 from rockit.common import TFmt
-from rockit.focuser import Config, CommandStatus, FocuserStatus
+from rockit.focuser.multichannel import Config, CommandStatus, FocuserStatus
 
 
 SCRIPT_NAME = os.path.basename(sys.argv[0])
@@ -41,7 +40,7 @@ def run_command(command, args):
         files = glob.glob("/etc/focusd/*.json")
         if len(files) != 1:
             print('error: failed to guess the default config file. ' +
-                  'Run as FOCUSD_CONFIG_PATH=/path/to/config.json pipeline <command>')
+                  'Run as FOCUSD_CONFIG_PATH=/path/to/config.json focus <command>')
             return 1
 
         config = Config(files[0])
